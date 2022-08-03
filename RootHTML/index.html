@@ -1,0 +1,545 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8" />
+
+    <!-- Aframe Environment Scripts -->
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+    <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/diarmidmackenzie/instanced-mesh@v0.5.0/src/instanced-mesh.min.js"></script>
+    <script src="//unpkg.com/aframe-extras@3.13.1/dist/aframe-extras.min.js"></script>
+
+    <!-- Networked Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
+    <script src="/easyrtc/easyrtc.js"></script>
+    <script src="https://unpkg.com/networked-aframe@^0.10.0/dist/networked-aframe.min.js"></script>
+
+    <!-- Stylesheets, Icons & Extras -->
+    <script src="https://kit.fontawesome.com/33a204ba2e.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="./styles.css">
+
+    <!-- Spawn-In-Circle -->
+    <script>
+        AFRAME.registerComponent('spawn-in-circle', {
+            schema: {
+                radius: {
+                    type: 'number',
+                    default: 1
+                }
+            },
+
+            init: function() {
+                var el = this.el;
+                var center = el.getAttribute('position');
+
+                var angleRad = this.getRandomAngleInRadians();
+                var circlePoint = this.randomPointOnCircle(this.data.radius, angleRad);
+                var worldPoint = {
+                    x: circlePoint.x + center.x,
+                    y: center.y,
+                    z: circlePoint.y + center.z
+                };
+                el.setAttribute('position', worldPoint);
+
+                var angleDeg = angleRad * 180 / Math.PI;
+                var angleToCenter = -1 * angleDeg + 90;
+                var rotationStr = '0 ' + angleToCenter + ' 0';
+                el.setAttribute('rotation', rotationStr);
+            },
+
+            getRandomAngleInRadians: function() {
+                return Math.random() * Math.PI * 2;
+            },
+
+            randomPointOnCircle: function(radius, angleRad) {
+                x = Math.cos(angleRad) * radius;
+                y = Math.sin(angleRad) * radius;
+                return {
+                    x: x,
+                    y: y
+                };
+            }
+        });
+
+    </script>
+</head>
+
+<body>
+
+    <!-- On-Screen Interaction Menu -->
+    <div id="main">
+        <div>
+            <!-- Chat Btn -->
+            <div class="chat-btn">
+                <h1 class="btn-text">CHAT</h1>
+                <i class="fa-solid chat fa-angle-down"></i>
+            </div>
+
+            <!-- Online Btn -->
+            <div class="online-btn">
+                <h1 class="online-btn-text">ONLINE:</h1>
+                <p class="online-btn-counter"></p>
+                <i class="fa-solid online fa-angle-down"></i>
+            </div>
+
+            <!-- Menu Btn -->
+            <div class="menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+
+            <!-- Chat Box -->
+            <div class="chat-box">
+                <div class="chat-window"></div>
+                <div class="chat-input">
+                    <input id="text-input" type="text" placeholder="Enter Message" />
+                    <i class="fa-solid fa-paper-plane"></i>
+                </div>
+            </div>
+
+            <!-- Online Box -->
+            <div class="online-box"></div>
+
+            <!-- Menu Box -->
+            <div class="menu-list">
+                <div class="exit-btn">
+                    <p class="exit-btn-text" style="font-size: 1rem;">Leave Room</p>
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Embedded 3D Scene -->
+    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; audio: true">
+
+        <!-- Asset Mangement System -->
+        <a-assets>
+            <a-asset-item id="table" src="assets/14_negotiating%20table.glb" response-type="arraybuffer"></a-asset-item>
+            <a-asset-item id="chair" src="/assets/scene.glb" response-type="arraybuffer"></a-asset-item>
+            <a-asset-item id="laptop" src="/assets/laptop.glb" response-type="arraybuffer"></a-asset-item>
+            <a-asset-item id="tvScreen" src="/assets/tv.glb" response-type="arraybuffer"></a-asset-item>
+            <a-asset-item id="whiteboard" src="assets/whiteboard.glb" response-type="arraybuffer"></a-asset-item>
+            <a-asset-item id="ceilingLight" src="/assets/lamp.glb" response-type="arraybuffer"></a-asset-item>
+            <a-asset-item id="avatarRobot" src="assets/robot2.glb" response-type="arraybuffer"></a-asset-item>
+            <img id="carpet" src="./assets/BlueCarpet.jpg" />
+            <img id="carpet-NRM" src="./assets/NormalMap-BlueCarpet.png" />
+            <img id="concreteWall" src="./assets/ConreteWall.jpg" />
+            <img id="concreteWall-NRM" src="./assets/NormalMap-ConcreteWall.png" />
+            <img id="woodPanels" src="./assets/WoodPillar.jpg" />
+            <img id="woodPanels-NRM" src="./assets/NormalMap-WoodPanel.png" />
+            <img id="tvBackground" src="./assets/tvBackground.jpg" />
+            <img id="ceilingTexture" src="assets/ceilingTexture.png" />
+            <img id="ceilingTexture-NRM" src="assets/NormalMap-ceilingTexture.png" />
+            <img id="laptopBackground" src="assets/laptopBackground.jpg" />
+
+            <!-- Avatar Template -->
+            <template id="avatar-template">
+                <a-entity class="avatar">
+                    <a-sphere class="head" scale="0.45 0.5 0.4" color="blue"></a-sphere>
+                    <a-entity class="face" position="0 0.05 0">
+                        <a-sphere class="eye" color="#efefef" position="0.16 0.1 -0.35" scale="0.12 0.12 0.12">
+                            <a-sphere class="pupil" color="#000" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                        </a-sphere>
+                        <a-sphere class="eye" color="#efefef" position="-0.16 0.1 -0.35" scale="0.12 0.12 0.12">
+                            <a-sphere class="pupil" color="#000" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
+                        </a-sphere>
+                    </a-entity>
+                </a-entity>
+            </template>
+        </a-assets>
+
+        <!-- Wrapping Entity -->
+        <a-entity id="conferenceRoom">
+
+            <!-- Avatar Entity -->
+            <a-entity id="player" networked="template: #avatar-template; attachTemplateToLocal: false;" spawn-in-circle="radius: 3;" camera position="0 1.6 0" wasd-controls look-controls></a-entity>
+
+            <a-entity id="props">
+                <a-entity id="chairProps" static-body>
+                    <a-entity id="instancedChairMesh" gltf-model="#chair" instanced-mesh></a-entity>
+                    <!-- End of Table Chairs -->
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 -4.3" rotation="0 0 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 4.3" rotation="0 180 0"></a-entity>
+                    <!-- Left Side of Table Chairs -->
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 -2.3" rotation="0 80 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 -0.8" rotation="0 90 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 0.7" rotation="0 90 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 2.2" rotation="0 100 0"></a-entity>
+                    <!-- Right Side of Table Chairs -->
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 -2.3" rotation="0 -80 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 -0.8" rotation="0 -90 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 0.7" rotation="0 -90 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 2.2" rotation="0 -100 0"></a-entity>
+                </a-entity>
+
+                <a-entity id="laptopProp" position="-0.897 0.75224 2.146" rotation="0 -83.27 0" static-body>
+                    <a-entity id="laptopModel" gltf-model="#laptop" scale="0.013 0.013 0.013"></a-entity>
+                    <a-image id="laptopBackgroundImage" src="#laptopBackground" position="0.001 0.137 -0.138" scale="0.385 0.23 0"></a-image>
+                </a-entity>
+
+                <a-entity id="tableProp" gltf-model="#table" material="" scale="0.003 0.001 0.0025" position="0 0 0" static-body></a-entity>
+
+                <a-entity id="tvProp" static-body>
+                    <a-entity id="tvModel" gltf-model="#tvScreen" position="0 2 -6.5" scale="3 2.5 5"></a-entity>
+                    <a-image id="tvBackgroundImage" src="#tvBackground" position="0 2 -6.46" scale="3.06 1.73 0"></a-image>
+                </a-entity>
+
+                <a-entity id="whiteboardProp" gltf-model="#whiteboard" position="3.96 0.4 0" rotation="0 90 0" scale="0.1 0.1 0.1" static-body></a-entity>
+
+                <a-entity id="ceilingLampProps" static-body>
+                    <a-entity id="instancedLampMesh" gltf-model="#ceilingLight" instanced-mesh></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedLampMesh" position="0 3.9 -3" scale="0.7 0.7 0.7"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedLampMesh" position="0 3.9 0" scale="0.7 0.7 0.7"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedLampMesh" position="0 3.9 3" scale="0.7 0.7 0.7"></a-entity>
+                </a-entity>
+            </a-entity>
+
+            <a-entity id="roomBase" static-body>
+                <a-entity id="walls">
+                    <!-- Long Side Wall -->
+                    <a-entity geometry="primitive: plane" rotation="0 -90 0" position="4 2 0" scale="13 4 1" material="src: #concreteWall;
+                                        color: #B0B9C9;
+                                        repeat: 26 8;
+                                        normal-map: #concreteWall-NRM;
+                                        normal-texture-repeat: 26 8;
+                                        normal-scale: 1 -1;                                   
+                                        roughness: 1"></a-entity>
+                    <!-- Short Side Walls -->
+                    <a-entity geometry="primitive: plane" rotation="0 0 0" position="0 2 -6.5" scale="8 4 1" material="src: #concreteWall;
+                                        color: lightgrey;
+                                        repeat: 16 8;
+                                        normal-map: #concreteWall-NRM;
+                                        normal-texture-repeat: 16 8;
+                                        normal-scale: 1 -1;
+                                        roughness: 1"></a-entity>
+                    <a-entity geometry="primitive: plane" rotation="0 180 0" position="0 2 6.5" scale="8 4 1" material="src: #concreteWall;
+                                        color: lightgrey;
+                                        repeat: 16 8;
+                                        normal-map: #concreteWall-NRM;
+                                        normal-texture-repeat: 16 8;
+                                        normal-scale: 1 -1;
+                                        roughness: 1"></a-entity>
+                </a-entity>
+
+                <a-entity id="window">
+                    <a-entity id="windowBeams">
+                        <a-entity geometry="primitive: box" position="-3.95 2 2.25" scale="0.5 4 0.1" rotation="0 90 0" material="src: #woodPanels;
+                                            repeat: 1 4;
+                                            normal-map: #woodPanels-NRM;
+                                            normal-texture-repeat: 1 4;
+                                            normal-scale: 1 -1;
+                                            roughness: 0.8"></a-entity>
+                        <a-entity geometry="primitive: box" position="-3.95 2 -2" scale="0.5 4 0.1" rotation="0 90 0" material="src: #woodPanels;
+                                            repeat: 1 4;
+                                            normal-map: #woodPanels-NRM;
+                                            normal-texture-repeat: 1 4;
+                                            normal-scale: 1 -1;
+                                            roughness: 0.8"></a-entity>
+                    </a-entity>
+
+                    <a-entity id="wideWindowPlane">
+                        <a-entity geometry="primitive: plane" rotation="0 90 0" position="-4 2 0" scale="13 4 1" material="opacity:0.2; color: grey" static-body></a-entity>
+                    </a-entity>
+
+                    <a-entity id="windowFrames">
+                        <!-- Bottom Horizontal Frames -->
+                        <a-entity id="instancedFrameMesh" geometry="primitive: box" material="color: grey" instanced-mesh></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 4" position="-3.95 0.05 4.5"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 3.76" position="-3.95 0.05 0.13"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 4.25" position="-3.95 0.05 -4.375"></a-entity>
+                        <!-- Top Horizontal Frames -->
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 4" position="-3.95 3.95 4.5"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 3.76" position="-3.95 3.95 0.13"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 4.25" position="-3.95 3.95 -4.375"></a-entity>
+                        <!-- Vertical Frames -->
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 3.8" rotation="90 0 0" position="-3.95 2 -6.45"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 3.8" rotation="90 0 0" position="-3.95 2 -2.3"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 3.8" rotation="90 0 0" position="-3.95 2 -1.7"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 3.8" rotation="90 0 0" position="-3.95 2 1.96"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 3.8" rotation="90 0 0" position="-3.95 2 2.55"></a-entity>
+                        <a-entity instanced-mesh-member="mesh: #instancedFrameMesh" scale="0.1 0.1 3.8" rotation="90 0 0" position="-3.95 2 6.45"></a-entity>
+                    </a-entity>
+                </a-entity>
+
+                <a-plane id="floor" rotation="-90 0 0" material="color: grey;
+                                   src: #carpet;
+                                   repeat: 8 13;
+                                   normal-map: #carpet-NRM;
+                                   normal-texture-repeat: 8 13;
+                                   roughness: 1" width="8" height="13" static-body></a-plane>
+
+                <a-plane id="ceiling" rotation="90 0 0" material="src: #ceilingTexture; 
+                                   repeat: 8 26;
+                                   normal-map: #ceilingTexture-NRM;
+                                   normal-texture-repeat: 8 26;
+                                   roughness: 1;
+                                   color: darkgrey" position="0 4 0" scale="8 13"></a-plane>
+
+            </a-entity>
+
+            <!-- Ambient Light -->
+            <a-entity id="lighting" light="intensity: 0.3; castShadow: true" position="12.42894 8.1176 -16.53667" data-aframe-default-light="" aframe-injected=""></a-entity>
+
+        </a-entity>
+    </a-scene>
+
+    <!-- JS -->
+    <script>
+        //Chat Box Toggle
+        var vrChatBtn = document.querySelector('.chat-btn');
+        var vrChatBtnText = document.querySelector('.btn-text');
+        var chatBox = document.querySelector('.chat-box');
+        var chatBtnArrow = document.querySelector('.chat.fa-angle-down');
+        vrChatBtn.onclick = function(evt) {
+
+            //Close Online Box if open
+            if (onlineBtnText.classList.contains('hidden')) {
+                onlineBtn.click();
+            }
+
+            chatBox.classList.toggle('hidden');
+            chatBtnArrow.classList.toggle('hidden');
+            vrChatBtnText.classList.toggle('hidden');
+            return;
+        };
+
+        //Check Owner   <<Finish checking if I am owner, if not, check which user is owner and add a crown icon>>
+        document.body.addEventListener('entityCreated', function(evt) {
+            var entityEl = evt.detail.el;
+            var owner = NAF.utils.isMine(entityEl);
+        });
+
+        //Append Online Users Counter When A User Connects
+        var clientsOnline = 1;
+        var onlineBtnCounter = document.querySelector('.online-btn-counter');
+        document.body.addEventListener("clientConnected", function(evt) {
+            clientsOnline += 1;
+            onlineBtnCounter.innerText = clientsOnline;
+        });
+
+        //Append Online Users Counter When A User Disconnects
+        document.body.addEventListener("clientDisconnected", function(evt) {
+            clientsOnline -= 1;
+            onlineBtnCounter.innerText = clientsOnline;
+        });
+
+        //Getting ClientId
+        var clientId = "";
+        document.body.addEventListener("connected", function(evt) {
+            clientId = evt.detail.clientId;
+            return;
+        });
+
+        //Online Box Toggle
+        var onlineBtn = document.querySelector('.online-btn');
+        var onlineBtnText = document.querySelector('.online-btn-text');
+        var onlineBtnArrow = document.querySelector('.online.fa-angle-down');
+        var onlineBox = document.querySelector('.online-box');
+        onlineBtn.onclick = function(evt) {
+
+            //Prevent adding multiple of the same users 
+            var child = onlineBox.lastElementChild;
+            while (child) {
+                onlineBox.removeChild(child);
+                child = onlineBox.lastElementChild;
+            }
+
+            //Close Chat Box if open
+            if (chatBox.classList.contains("hidden")) {
+                vrChatBtn.click();
+            }
+
+            onlineBtnText.classList.toggle('hidden');
+            onlineBtnCounter.classList.toggle('hidden');
+            onlineBtnArrow.classList.toggle('hidden');
+            onlineBox.classList.toggle('hidden');
+
+            //Display MyUser ClientId
+            var myInfoDiv = document.createElement('div');
+            var myText = document.createElement('h1');
+            var myIcon = document.createElement('i');
+            myInfoDiv.classList.add('user-info');
+            myText.classList.add('online-user-text');
+            myIcon.classList.add('fa-solid');
+            myIcon.classList.add('fa-user');
+            myInfoDiv.appendChild(myIcon);
+            myInfoDiv.appendChild(myText);
+            onlineBox.appendChild(myInfoDiv);
+            myText.innerText = clientId;
+
+            //Display OtherUsers ClientId
+            if (clientsOnline > 1) {
+                let connectedClientsObj = NAF.connection.getConnectedClients();
+                let connectedClients = Object.keys(connectedClientsObj);
+                for (let i = 0; i < clientsOnline - 1; i++) {
+                    var userInfoDiv = document.createElement('div');
+                    var userText = document.createElement('h1');
+                    var userIcon = document.createElement('i');
+                    userInfoDiv.classList.add('user-info');
+                    userText.classList.add('online-user-text');
+                    userIcon.classList.add('fa-solid');
+                    userIcon.classList.add('fa-user');
+                    userInfoDiv.appendChild(userIcon);
+                    userInfoDiv.appendChild(userText);
+                    onlineBox.appendChild(userInfoDiv);
+                    userText.innerText = connectedClients[i];
+                }
+
+                //OtherUser Mouse-Over Toggle
+                userInfoDiv.addEventListener("mouseenter", function(evt) {
+                    let icon = userInfoDiv.firstChild;
+                    icon.classList.add('hover');
+                });
+                userInfoDiv.addEventListener("mouseleave", function(evt) {
+                    let icon = userInfoDiv.firstChild;
+                    icon.classList.remove('hover');
+                });
+            }
+
+            //MyUsers Mouse-Over Toogle
+            myInfoDiv.addEventListener("mouseenter", function(evt) {
+                let icon = myInfoDiv.firstChild;
+                icon.classList.add('hover');
+            });
+            myInfoDiv.addEventListener("mouseleave", function(evt) {
+                let icon = myInfoDiv.firstChild;
+                icon.classList.remove('hover');
+            });
+        }
+
+        //Menu Toggle
+        var menuBtn = document.querySelector('.menu-btn');
+        var menuIcon = document.querySelector('.fa-bars');
+        var menuList = document.querySelector('.menu-list');
+        var exitBtn = document.querySelector('.exit-btn');
+        menuBtn.onclick = function(evt) {
+            menuBtn.classList.toggle('hidden');
+            menuIcon.classList.toggle('hidden');
+            menuList.classList.toggle('hidden');
+            exitBtn.classList.toggle('hidden');
+        }
+
+        //Exit Room Button Hover-Over Styling
+        var exitBtnText = document.querySelector('.exit-btn-text');
+        var exitBtnIcon = document.querySelector('.fa-arrow-right-from-bracket');
+        exitBtn.addEventListener("mouseenter", function(evt) {
+            exitBtnText.classList.toggle('hidden');
+            exitBtnIcon.classList.toggle('hidden');
+        });
+        exitBtn.addEventListener("mouseleave", function(evt) {
+            exitBtnText.classList.toggle('hidden');
+            exitBtnIcon.classList.toggle('hidden');
+        });
+
+        //Leave Current Room
+        exitBtn.onclick = function(evt) {
+            AFRAME.scenes[0].removeAttribute('networked-scene');
+        }
+
+        //Message Receiver
+        NAF.connection.subscribeToDataChannel("text", function(senderId, dataType, data, targetObj) {
+            console.log(senderId + " :  " + data.text);
+            var text = data.text;
+
+            //Appending New Message to Chat Box //Receiver Side//
+            var clientMessage = document.createElement("div");
+            var clientInfo = document.createElement("div");
+            var clientName = document.createElement("h4");
+            var clientTime = document.createElement("p");
+            var clientMessageText = document.createElement("a");
+            clientMessage.classList.add("client-message");
+            clientInfo.classList.add("client-info");
+            clientTime.classList.add("client-time");
+            clientName.classList.add("client-name");
+            clientMessageText.classList.add("client-message-text");
+            clientMessage.appendChild(clientInfo);
+            clientInfo.appendChild(clientName);
+            clientInfo.appendChild(clientTime);
+            clientMessage.appendChild(clientMessageText);
+            clientTime.innerText = data.time;
+            clientName.innerText = senderId;
+
+            //Check if mesasge is a Website
+            if (text.substring(0, 4) == "www." || text.substring(0, 8) == "https://" || text.substring(0, 7) == "http://") {
+                clientMessageText.setAttribute('href', text);
+                clientMessageText.classList.add('website');
+            }
+
+            clientMessageText.innerText = text;
+            chatWindow.appendChild(clientMessage);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return;
+        });
+
+        //Send message on 'Enter'
+        var input = document.getElementById('text-input');
+        var sendBtn = document.querySelector('.fa-paper-plane');
+        input.addEventListener('keypress', function(evt) {
+            if (evt.key == "Enter") {
+                evt.preventDefault();
+                if (input.value == "") {
+                    return;
+                } else {
+                    sendBtn.click();
+                }
+            }
+        });
+
+        //Message Sender
+        var chatWindow = document.querySelector('.chat-window');
+        sendBtn.onclick = function(evt) {
+            let timeNow = new Date().toLocaleTimeString('en-UK', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            let textInput = document.getElementById('text-input').value;
+            NAF.connection.broadcastData("text", {
+                text: textInput,
+                time: timeNow
+            });
+
+            //Appending New Message to Chat Box //Sender Side//
+            var myMessage = document.createElement("div");
+            var myInfo = document.createElement("div");
+            var myTime = document.createElement("p");
+            var myName = document.createElement("h4");
+            var myMessageText = document.createElement("a");
+            myMessage.classList.add("my-message");
+            myInfo.classList.add("my-info");
+            myTime.classList.add("my-time");
+            myName.classList.add("my-name");
+            myMessageText.classList.add("my-message-text");
+            myMessage.appendChild(myInfo);
+            myInfo.appendChild(myTime);
+            myInfo.appendChild(myName);
+            myMessage.appendChild(myMessageText);
+            myTime.innerText = timeNow;
+            myName.innerText = clientId;
+
+            //Check if mesasge is a Website
+            if (textInput.substring(0, 4) == "www." || textInput.substring(0, 8) == "https://" || textInput.substring(0, 7) == "http://") {
+                myMessageText.setAttribute('href', textInput);
+                myMessageText.classList.add('website');
+            }
+
+            myMessageText.innerText = textInput;
+            chatWindow.appendChild(myMessage);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            document.getElementById('text-input').value = "";
+            return;
+        };
+
+        //Establish Connection
+        function onConnect() {
+            console.log('onConnect', new Date());
+            onlineBtnCounter.innerText = clientsOnline;
+        }
+
+    </script>
+
+</body>
+
+</html>
