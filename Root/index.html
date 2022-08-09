@@ -7,9 +7,10 @@
 
     <!-- Aframe Environment Scripts -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@v4.0.1/dist/aframe-physics-system.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/diarmidmackenzie/instanced-mesh@v0.5.0/src/instanced-mesh.min.js"></script>
-    <script src="//unpkg.com/aframe-extras@3.13.1/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.misc.min.js"></script>
+    <script src="https://unpkg.com/aframe-physics-extras@0.1.2/dist/aframe-physics-extras.min.js"></script>
 
     <!-- Networked Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
@@ -113,7 +114,7 @@
     </div>
 
     <!-- Embedded 3D Scene -->
-    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; audio: true">
+    <a-scene physics background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; audio: true">
 
         <!-- Asset Mangement System -->
         <a-assets>
@@ -138,7 +139,7 @@
             <!-- Avatar Template -->
             <template id="avatar-template">
                 <a-entity class="avatar">
-                    <a-sphere class="head" scale="0.45 0.5 0.4" color="blue"></a-sphere>
+                    <a-sphere class="head" scale="0.45 0.5 0.4" color="pink"></a-sphere>
                     <a-entity class="face" position="0 0.05 0">
                         <a-sphere class="eye" color="#efefef" position="0.16 0.1 -0.35" scale="0.12 0.12 0.12">
                             <a-sphere class="pupil" color="#000" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
@@ -155,41 +156,41 @@
         <a-entity id="conferenceRoom">
 
             <!-- Avatar Entity -->
-            <a-entity id="player" networked="template: #avatar-template; attachTemplateToLocal: false;" spawn-in-circle="radius: 3;" camera position="0 1.6 0" wasd-controls look-controls></a-entity>
+            <a-entity id="player" networked="template: #avatar-template; attachTemplateToLocal: false;" spawn-in-circle="radius: 3;" camera position="0 1.6 0" wasd-controls look-controls static-body></a-entity>
 
             <a-entity id="props">
-                <a-entity id="chairProps" static-body>
+                <a-entity id="chairProps">
                     <a-entity id="instancedChairMesh" gltf-model="#chair" instanced-mesh></a-entity>
                     <!-- End of Table Chairs -->
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 -4.3" rotation="0 0 0"></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 4.3" rotation="0 180 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 -4.3" rotation="0 0 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 4.3" rotation="0 180 0" static-body></a-entity>
                     <!-- Left Side of Table Chairs -->
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 -2.3" rotation="0 80 0"></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 -0.8" rotation="0 90 0"></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 0.7" rotation="0 90 0"></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 2.2" rotation="0 100 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 -2.3" rotation="0 80 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 -0.8" rotation="0 90 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 0.7" rotation="0 90 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 2.2" rotation="0 100 0" static-body></a-entity>
                     <!-- Right Side of Table Chairs -->
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 -2.3" rotation="0 -80 0"></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 -0.8" rotation="0 -90 0"></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 0.7" rotation="0 -90 0"></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 2.2" rotation="0 -100 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 -2.3" rotation="0 -80 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 -0.8" rotation="0 -90 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 0.7" rotation="0 -90 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 2.2" rotation="0 -100 0" static-body></a-entity>
                 </a-entity>
 
-                <a-entity id="laptopProp" position="-0.897 0.75224 2.146" rotation="0 -83.27 0" static-body>
+                <a-entity id="laptopProp" position="-0.897 0.75224 2.146" rotation="0 -83.27 0" >
                     <a-entity id="laptopModel" gltf-model="#laptop" scale="0.013 0.013 0.013"></a-entity>
                     <a-image id="laptopBackgroundImage" src="#laptopBackground" position="0.001 0.137 -0.138" scale="0.385 0.23 0"></a-image>
                 </a-entity>
 
                 <a-entity id="tableProp" gltf-model="#table" material="" scale="0.003 0.001 0.0025" position="0 0 0" static-body></a-entity>
 
-                <a-entity id="tvProp" static-body>
+                <a-entity id="tvProp">
                     <a-entity id="tvModel" gltf-model="#tvScreen" position="0 2 -6.5" scale="3 2.5 5"></a-entity>
                     <a-image id="tvBackgroundImage" src="#tvBackground" position="0 2 -6.46" scale="3.06 1.73 0"></a-image>
                 </a-entity>
 
                 <a-entity id="whiteboardProp" gltf-model="#whiteboard" position="3.96 0.4 0" rotation="0 90 0" scale="0.1 0.1 0.1" static-body></a-entity>
 
-                <a-entity id="ceilingLampProps" static-body>
+                <a-entity id="ceilingLampProps">
                     <a-entity id="instancedLampMesh" gltf-model="#ceilingLight" instanced-mesh></a-entity>
                     <a-entity instanced-mesh-member="mesh: #instancedLampMesh" position="0 3.9 -3" scale="0.7 0.7 0.7"></a-entity>
                     <a-entity instanced-mesh-member="mesh: #instancedLampMesh" position="0 3.9 0" scale="0.7 0.7 0.7"></a-entity>
@@ -197,7 +198,7 @@
                 </a-entity>
             </a-entity>
 
-            <a-entity id="roomBase" static-body>
+            <a-entity id="roomBase" >
                 <a-entity id="walls">
                     <!-- Long Side Wall -->
                     <a-entity geometry="primitive: plane" rotation="0 -90 0" position="4 2 0" scale="13 4 1" material="src: #concreteWall;
@@ -206,7 +207,7 @@
                                         normal-map: #concreteWall-NRM;
                                         normal-texture-repeat: 26 8;
                                         normal-scale: 1 -1;                                   
-                                        roughness: 1"></a-entity>
+                                        roughness: 1" static-body></a-entity>
                     <!-- Short Side Walls -->
                     <a-entity geometry="primitive: plane" rotation="0 0 0" position="0 2 -6.5" scale="8 4 1" material="src: #concreteWall;
                                         color: lightgrey;
@@ -241,7 +242,7 @@
                     </a-entity>
 
                     <a-entity id="wideWindowPlane">
-                        <a-entity geometry="primitive: plane" rotation="0 90 0" position="-4 2 0" scale="13 4 1" material="opacity:0.2; color: grey" static-body></a-entity>
+                        <a-entity geometry="primitive: plane" rotation="0 90 0" position="-4 2 0" scale="13 4 1" material="opacity:0.2; color: grey"></a-entity>
                     </a-entity>
 
                     <a-entity id="windowFrames">
@@ -269,7 +270,7 @@
                                    repeat: 8 13;
                                    normal-map: #carpet-NRM;
                                    normal-texture-repeat: 8 13;
-                                   roughness: 1" width="8" height="13" static-body></a-plane>
+                                   roughness: 1" width="8" height="13"></a-plane>
 
                 <a-plane id="ceiling" rotation="90 0 0" material="src: #ceilingTexture; 
                                    repeat: 8 26;
@@ -307,10 +308,10 @@
         };
 
         //Check Owner   <<Finish checking if I am owner, if not, check which user is owner and add a crown icon>>
-        document.body.addEventListener('entityCreated', function(evt) {
-            var entityEl = evt.detail.el;
-            var owner = NAF.utils.isMine(entityEl);
-        });
+        //document.body.addEventListener('entityCreated', function(evt) {
+        //    var entityEl = evt.detail.el;
+        //    var owner = NAF.utils.isMine(entityEl);
+        //});
 
         //Append Online Users Counter When A User Connects
         var clientsOnline = 1;
