@@ -7,7 +7,7 @@
 
     <!-- Aframe Environment Scripts -->
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-physics-system@v4.0.1/dist/aframe-physics-system.min.js"></script>
+    <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/diarmidmackenzie/instanced-mesh@v0.5.0/src/instanced-mesh.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.misc.min.js"></script>
     <script src="https://unpkg.com/aframe-physics-extras@0.1.2/dist/aframe-physics-extras.min.js"></script>
@@ -71,7 +71,7 @@
 
     <!-- On-Screen Interaction Menu -->
     <div id="main">
-        <div>
+        <div class="onscreen-buttons">
             <!-- Chat Btn -->
             <div class="chat-btn">
                 <h1 class="btn-text">CHAT</h1>
@@ -85,11 +85,16 @@
                 <i class="fa-solid online fa-angle-down"></i>
             </div>
 
+            <!-- User Left Room Notification -->
+            <div class="exit-notification"></div>
+
             <!-- Menu Btn -->
             <div class="menu-btn">
                 <i class="fa-solid fa-bars"></i>
             </div>
 
+        </div>
+        <div class="pop-ups">
             <!-- Chat Box -->
             <div class="chat-box">
                 <div class="chat-window"></div>
@@ -114,7 +119,7 @@
     </div>
 
     <!-- Embedded 3D Scene -->
-    <a-scene physics background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; audio: true">
+    <a-scene physics="debug: true" background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc">
 
         <!-- Asset Mangement System -->
         <a-assets>
@@ -139,7 +144,7 @@
             <!-- Avatar Template -->
             <template id="avatar-template">
                 <a-entity class="avatar">
-                    <a-sphere class="head" scale="0.45 0.5 0.4" color="pink"></a-sphere>
+                    <a-sphere class="head" scale="0.45 0.5 0.4" color="#5985ff"></a-sphere>
                     <a-entity class="face" position="0 0.05 0">
                         <a-sphere class="eye" color="#efefef" position="0.16 0.1 -0.35" scale="0.12 0.12 0.12">
                             <a-sphere class="pupil" color="#000" position="0 0 -1" scale="0.2 0.2 0.2"></a-sphere>
@@ -156,24 +161,24 @@
         <a-entity id="conferenceRoom">
 
             <!-- Avatar Entity -->
-            <a-entity id="player" networked="template: #avatar-template; attachTemplateToLocal: false;" spawn-in-circle="radius: 3;" camera position="0 1.6 0" wasd-controls look-controls static-body></a-entity>
+            <a-entity id="player" networked="template: #avatar-template; attachTemplateToLocal: false;" spawn-in-circle="radius: 3;" camera position="0 1.6 0" wasd-controls look-controls></a-entity>
 
             <a-entity id="props">
                 <a-entity id="chairProps">
                     <a-entity id="instancedChairMesh" gltf-model="#chair" instanced-mesh></a-entity>
                     <!-- End of Table Chairs -->
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 -4.3" rotation="0 0 0" static-body></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 4.3" rotation="0 180 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 -4.3" rotation="0 0 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="0 0 4.3" rotation="0 180 0"></a-entity>
                     <!-- Left Side of Table Chairs -->
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 -2.3" rotation="0 80 0" static-body></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 -0.8" rotation="0 90 0" static-body></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 0.7" rotation="0 90 0" static-body></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 2.2" rotation="0 100 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 -2.3" rotation="0 80 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 -0.8" rotation="0 90 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.7 0 0.7" rotation="0 90 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="-1.5 0 2.2" rotation="0 100 0"></a-entity>
                     <!-- Right Side of Table Chairs -->
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 -2.3" rotation="0 -80 0" static-body></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 -0.8" rotation="0 -90 0" static-body></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 0.7" rotation="0 -90 0" static-body></a-entity>
-                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 2.2" rotation="0 -100 0" static-body></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 -2.3" rotation="0 -80 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 -0.8" rotation="0 -90 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.7 0 0.7" rotation="0 -90 0"></a-entity>
+                    <a-entity instanced-mesh-member="mesh: #instancedChairMesh" position="1.5 0 2.2" rotation="0 -100 0"></a-entity>
                 </a-entity>
 
                 <a-entity id="laptopProp" position="-0.897 0.75224 2.146" rotation="0 -83.27 0" >
@@ -181,14 +186,14 @@
                     <a-image id="laptopBackgroundImage" src="#laptopBackground" position="0.001 0.137 -0.138" scale="0.385 0.23 0"></a-image>
                 </a-entity>
 
-                <a-entity id="tableProp" gltf-model="#table" material="" scale="0.003 0.001 0.0025" position="0 0 0" static-body></a-entity>
+                <a-entity id="tableProp" gltf-model="#table" material="" scale="0.003 0.001 0.0025" position="0 0 0"></a-entity>
 
                 <a-entity id="tvProp">
                     <a-entity id="tvModel" gltf-model="#tvScreen" position="0 2 -6.5" scale="3 2.5 5"></a-entity>
                     <a-image id="tvBackgroundImage" src="#tvBackground" position="0 2 -6.46" scale="3.06 1.73 0"></a-image>
                 </a-entity>
 
-                <a-entity id="whiteboardProp" gltf-model="#whiteboard" position="3.96 0.4 0" rotation="0 90 0" scale="0.1 0.1 0.1" static-body></a-entity>
+                <a-entity id="whiteboardProp" gltf-model="#whiteboard" position="3.96 0.4 0" rotation="0 90 0" scale="0.1 0.1 0.1"></a-entity>
 
                 <a-entity id="ceilingLampProps">
                     <a-entity id="instancedLampMesh" gltf-model="#ceilingLight" instanced-mesh></a-entity>
@@ -321,17 +326,51 @@
             onlineBtnCounter.innerText = clientsOnline;
         });
 
-        //Append Online Users Counter When A User Disconnects
-        document.body.addEventListener("clientDisconnected", function(evt) {
-            clientsOnline -= 1;
-            onlineBtnCounter.innerText = clientsOnline;
-        });
-
         //Getting ClientId
         var clientId = "";
         document.body.addEventListener("connected", function(evt) {
             clientId = evt.detail.clientId;
             return;
+        });
+
+        //When A User Disconnects
+        var exitNotification = document.querySelector('.exit-notification');
+        document.body.addEventListener("clientDisconnected", function(evt) {
+            //Append online user count
+            clientsOnline -= 1;
+            onlineBtnCounter.innerText = clientsOnline;
+            
+            //Prevent notification stacking
+            var child = exitNotification.lastElementChild;
+            while (child) {
+                exitNotification.removeChild(child);
+                child = exitNotification.lastElementChild;
+            }
+
+            var exitClientId = evt.detail.clientId;
+            
+            //Don't send notification to disconnected user 
+            if(!AFRAME.scenes[0].getAttribute('networked-scene')){
+                return;
+            }
+            else{
+                var userExitRoomDiv = document.createElement('div');
+                var userExitInfo = document.createElement('p');
+                var userExitText = document.createElement('p');
+                userExitRoomDiv.classList.add('user-exit-room');
+                userExitInfo.classList.add('user-exit-info');
+                userExitText.classList.add('left-text');
+                userExitRoomDiv.appendChild(userExitInfo);
+                userExitRoomDiv.appendChild(userExitText);
+                exitNotification.appendChild(userExitRoomDiv);
+                userExitInfo.innerText = exitClientId;
+                userExitText.innerText = "left";
+
+                exitNotification.classList.add('hidden');
+                setTimeout(function(){
+                    exitNotification.classList.remove('hidden');
+                },3000);
+            }
         });
 
         //Online Box Toggle
@@ -435,7 +474,7 @@
             exitBtnIcon.classList.toggle('hidden');
         });
 
-        //Leave Current Room
+        //Leave Current Room (Client-side)
         exitBtn.onclick = function(evt) {
             AFRAME.scenes[0].removeAttribute('networked-scene');
         }
