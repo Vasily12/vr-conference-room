@@ -25,45 +25,36 @@
     <script>
         AFRAME.registerComponent('spawn-in-circle', {
             schema: {
-                radius: {
-                    type: 'number',
-                    default: 1
-                }
+              radius: {type: 'number', default: 1}
             },
-
+          
             init: function() {
-                var el = this.el;
-                var center = el.getAttribute('position');
-
-                var angleRad = this.getRandomAngleInRadians();
-                var circlePoint = this.randomPointOnCircle(this.data.radius, angleRad);
-                var worldPoint = {
-                    x: circlePoint.x + center.x,
-                    y: center.y,
-                    z: circlePoint.y + center.z
-                };
-                el.setAttribute('position', worldPoint);
-
-                var angleDeg = angleRad * 180 / Math.PI;
-                var angleToCenter = -1 * angleDeg + 90;
-                var rotationStr = '0 ' + angleToCenter + ' 0';
-                el.setAttribute('rotation', rotationStr);
+              var el = this.el;
+              var center = el.getAttribute('position');
+          
+              var angleRad = this.getRandomAngleInRadians();
+              var circlePoint = this.randomPointOnCircle(this.data.radius, angleRad);
+              var worldPoint = {x: circlePoint.x + center.x, y: center.y, z: circlePoint.y + center.z};
+              el.setAttribute('position', worldPoint);
+              // console.log('world point', worldPoint);
+          
+              var angleDeg = angleRad * 180 / Math.PI;
+              var angleToCenter = -1 * angleDeg + 90;
+              angleRad = THREE.Math.degToRad(angleToCenter);
+              el.object3D.rotation.set(0, angleRad, 0);
+              // console.log('angle deg', angleDeg);
             },
-
+          
             getRandomAngleInRadians: function() {
-                return Math.random() * Math.PI * 2;
+              return Math.random()*Math.PI*2;
             },
-
-            randomPointOnCircle: function(radius, angleRad) {
-                x = Math.cos(angleRad) * radius;
-                y = Math.sin(angleRad) * radius;
-                return {
-                    x: x,
-                    y: y
-                };
+          
+            randomPointOnCircle: function (radius, angleRad) {
+              var x = Math.cos(angleRad)*radius;
+              var y = Math.sin(angleRad)*radius;
+              return {x: x, y: y};
             }
         });
-
     </script>
 </head>
 
@@ -71,7 +62,7 @@
 
     <!-- On-Screen Interaction Menu -->
     <div id="main">
-        <div class="onscreen-buttons">
+        <div class="onscreen-buttons-top">
             <!-- Chat Btn -->
             <div class="chat-btn">
                 <h1 class="btn-text">CHAT</h1>
@@ -92,9 +83,9 @@
             <div class="menu-btn">
                 <i class="fa-solid fa-bars"></i>
             </div>
-
         </div>
-        <div class="pop-ups">
+
+        <div class="top-pop-ups">
             <!-- Chat Box -->
             <div class="chat-box">
                 <div class="chat-window"></div>
@@ -116,10 +107,24 @@
             </div>
         </div>
 
+        <div class="onscreen-buttons-bottom">
+            <!-- Share Video/ Show Camera -->
+            <div class="video-camera-share">
+                <div class="video-btn">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+                <div class="share-video-btn">
+                    <i class="fa-solid fa-display"></i>
+                </div>
+                <div class="show-camera-btn">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Embedded 3D Scene -->
-    <a-scene physics="debug: true" background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc">
+    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc;">
 
         <!-- Asset Mangement System -->
         <a-assets>
@@ -130,7 +135,6 @@
             <a-asset-item id="whiteboard" src="assets/whiteboard.glb" response-type="arraybuffer"></a-asset-item>
             <a-asset-item id="ceilingLight" src="/assets/lamp.glb" response-type="arraybuffer"></a-asset-item>
             <a-asset-item id="avatarRobot" src="assets/robot2.glb" response-type="arraybuffer"></a-asset-item>
-            
             <img id="carpet" src="./assets/BlueCarpet.jpg" />
             <img id="carpet-NRM" src="./assets/NormalMap-BlueCarpet.png" />
             <img id="concreteWall" src="./assets/ConreteWall.jpg" />
@@ -158,11 +162,11 @@
             </template>
         </a-assets>
 
+        <!-- Avatar Entity -->
+        <a-entity id="player" networked="template: #avatar-template; attachTemplateToLocal: false;" camera position="0 1.6 0" spawn-in-circle="radius: 3" wasd-controls look-controls></a-entity>
+        
         <!-- Wrapping Entity -->
-        <a-entity id="conferenceRoom">
-
-            <!-- Avatar Entity -->
-            <a-entity id="player" networked="template: #avatar-template; attachTemplateToLocal: false;" spawn-in-circle="radius: 3;" camera position="0 1.6 0" wasd-controls look-controls></a-entity>
+        <a-entity id="conferenceRoom"> 
 
             <a-entity id="props">
                 <a-entity id="chairProps">
@@ -213,7 +217,7 @@
                                         normal-map: #concreteWall-NRM;
                                         normal-texture-repeat: 26 8;
                                         normal-scale: 1 -1;                                   
-                                        roughness: 1" static-body></a-entity>
+                                        roughness: 1"></a-entity>
                     <!-- Short Side Walls -->
                     <a-entity geometry="primitive: plane" rotation="0 0 0" position="0 2 -6.5" scale="8 4 1" material="src: #concreteWall;
                                         color: lightgrey;
@@ -228,7 +232,7 @@
                                         normal-map: #concreteWall-NRM;
                                         normal-texture-repeat: 16 8;
                                         normal-scale: 1 -1;
-                                        roughness: 1"></a-entity>
+                                        roughness: 1" static-body></a-entity>
                 </a-entity>
 
                 <a-entity id="window">
@@ -308,9 +312,9 @@
             }
 
             chatBox.classList.toggle('hidden');
+            vrChatBtn.classList.toggle('hidden');
             chatBtnArrow.classList.toggle('hidden');
             vrChatBtnText.classList.toggle('hidden');
-            return;
         };
 
         //Check Owner   <<Finish checking if I am owner, if not, check which user is owner and add a crown icon>>
@@ -393,6 +397,7 @@
                 vrChatBtn.click();
             }
 
+            onlineBtn.classList.toggle('hidden');
             onlineBtnText.classList.toggle('hidden');
             onlineBtnCounter.classList.toggle('hidden');
             onlineBtnArrow.classList.toggle('hidden');
@@ -478,7 +483,7 @@
         //Leave Current Room (Client-side)
         exitBtn.onclick = function(evt) {
             AFRAME.scenes[0].removeAttribute('networked-scene');
-        }
+        };
 
         //Message Receiver
         NAF.connection.subscribeToDataChannel("text", function(senderId, dataType, data, targetObj) {
@@ -528,6 +533,24 @@
                 }
             }
         });
+
+        //Video Share/ Show Camera
+        var videoBtn = document.querySelector('.video-btn');
+        var shareVideoBtn = document.querySelector('.share-video-btn');
+        var showCameraBtn = document.querySelector('.show-camera-btn');
+        var videoBtnIcon = document.querySelector('.fa-plus');
+        videoBtn.onclick = function(evt) {
+            shareVideoBtn.classList.toggle('hidden');
+            showCameraBtn.classList.toggle('hidden');
+            videoBtn.classList.toggle('hidden');
+            videoBtnIcon.classList.toggle('hidden');
+            if(videoBtn.classList.contains('hidden')) {
+                videoBtnIcon.classList.replace('fa-plus', 'fa-minus');
+            }
+            else {
+                videoBtnIcon.classList.replace('fa-minus', 'fa-plus');
+            }
+        }
 
         //Message Sender
         var chatWindow = document.querySelector('.chat-window');
