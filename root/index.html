@@ -25,32 +25,32 @@
     <script>
         AFRAME.registerComponent('spawn-in-circle', {
             schema: {
-              radius: {type: 'number', default: 1}
+                radius: {type: 'number', default: 1}
             },
-          
+
             init: function() {
-              var el = this.el;
-              var center = el.getAttribute('position');
-          
-              var angleRad = this.getRandomAngleInRadians();
-              var circlePoint = this.randomPointOnCircle(this.data.radius, angleRad);
-              var worldPoint = {x: circlePoint.x + center.x, y: center.y, z: circlePoint.y + center.z};
-              el.setAttribute('position', worldPoint);
-          
-              var angleDeg = angleRad * 180 / Math.PI;
-              var angleToCenter = -1 * angleDeg + 90;
-              angleRad = THREE.Math.degToRad(angleToCenter);
-              el.object3D.rotation.set(0, angleRad, 0);
+                var el = this.el;
+                var center = el.getAttribute('position');
+
+                var angleRad = this.getRandomAngleInRadians();
+                var circlePoint = this.randomPointOnCircle(this.data.radius, angleRad);
+                var worldPoint = {x: circlePoint.x + center.x, y: center.y, z: circlePoint.y + center.z};
+                el.setAttribute('position', worldPoint);
+
+                var angleDeg = angleRad * 180 / Math.PI;
+                var angleToCenter = -1 * angleDeg + 90;
+                angleRad = THREE.Math.degToRad(angleToCenter);
+                el.object3D.rotation.set(0, angleRad, 0);
             },
-          
+
             getRandomAngleInRadians: function() {
-              return Math.random()*Math.PI*2;
+                return Math.random()*Math.PI*2;
             },
-          
+
             randomPointOnCircle: function (radius, angleRad) {
-              var x = Math.cos(angleRad)*radius;
-              var y = Math.sin(angleRad)*radius;
-              return {x: x, y: y};
+                var x = Math.cos(angleRad)*radius;
+                var y = Math.sin(angleRad)*radius;
+                return {x: x, y: y};
             }
         });
     </script>
@@ -122,7 +122,7 @@
     </div>
 
     <!-- Embedded 3D Scene -->
-    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc;">
+    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; video: true; audio: false;">
 
         <!-- Asset Mangement System -->
         <a-assets>
@@ -158,13 +158,31 @@
                     </a-entity>
                 </a-entity>
             </template>
+
+            <!-- Camera Template -->
+            <template id="camera-template">
+                    <a-plane position="0 2 -6.45" scale="3.06 1.73 0" networked-video-source></a-plane>
+            </template>
+
+            <!-- Video Template -->
+            <template id="video-template">
+                <a-plane position="0 2 -6.45" scale="3.06 1.73 0" networked-video-source="streamName: screen"></a-plane>
+            </template>
+
         </a-assets>
 
-        <!-- Avatar Entity -->
-        <a-entity id="player" networked="template: #avatar-template; attachTemplateToLocal: false;" camera position="0 1.6 0" spawn-in-circle="radius: 3" wasd-controls look-controls></a-entity>
-        
         <!-- Wrapping Entity -->
         <a-entity id="conferenceRoom"> 
+
+            <!-- Avatar Entity -->
+            <a-entity id="player"
+                      networked="template:#avatar-template;attachTemplateToLocal:false;" 
+                      camera
+                      position="0 1.6 0"
+                      look-controls
+                      spawn-in-circle="radius:3"
+                      wasd-controls>
+            </a-entity>
 
             <a-entity id="props">
                 <a-entity id="chairProps">
@@ -194,6 +212,8 @@
                 <a-entity id="tvProp">
                     <a-entity id="tvModel" gltf-model="#tvScreen" position="0 2 -6.5" scale="3 2.5 5"></a-entity>
                     <a-image id="tvBackgroundImage" src="#tvBackground" position="0 2 -6.46" scale="3.06 1.73 0"></a-image>
+                    <a-entity id="camera-screen"></a-entity>
+                    <a-entity id="video-screen"></a-entity>
                 </a-entity>
 
                 <a-entity id="whiteboardProp" gltf-model="#whiteboard" position="3.96 0.4 0" rotation="0 90 0" scale="0.1 0.1 0.1"></a-entity>
@@ -230,7 +250,7 @@
                                         normal-map: #concreteWall-NRM;
                                         normal-texture-repeat: 16 8;
                                         normal-scale: 1 -1;
-                                        roughness: 1" static-body></a-entity>
+                                        roughness: 1"></a-entity>
                 </a-entity>
 
                 <a-entity id="window">
@@ -293,10 +313,16 @@
             <a-entity id="lighting" light="intensity: 0.3; castShadow: true" position="12.42894 8.1176 -16.53667" data-aframe-default-light="" aframe-injected=""></a-entity>
 
         </a-entity>
+
     </a-scene>
 
     <!-- JS -->
     <script>
+
+        document.querySelector('a-scene').addEventListener('loaded', function () {
+                this.camera.el.setAttribute('camera', 'active: false')
+        });
+
         //Chat Box Toggle
         var vrChatBtn = document.querySelector('.chat-btn');
         var vrChatBtnText = document.querySelector('.btn-text');
@@ -594,10 +620,77 @@
             return;
         };
 
+        let cameraEnabled = true;
+        var cameraScreenEntity = document.querySelector('#camera-screen');
+
+        let screenEnabled = false;
+        var videoScreenEntity = document.querySelector('#video-screen');
+
+        //Update 'otherClientPresenting' on change
+        let otherClientPresenting = false;
+        NAF.connection.subscribeToDataChannel("otherClientPresenting", function(senderId, dataType, data, targetObj) {
+            otherClientPresenting = data.otherClientPresenting;
+        });
+
+        //Stream Details (stream_id, stream_name)
+        NAF.connection.subscribeToDataChannel("__closingMediaStream", function(senderId, dataType, data, targetObj) {
+            console.log(data);
+        });
+
+        //Video Share Logic
+        shareVideoBtn.addEventListener('click', function (){
+            if(otherClientPresenting){
+                console.log("someone else is presenting");
+            }
+            else{
+                if(screenEnabled){
+                    videoScreenEntity.removeAttribute('networked');
+                    NAF.connection.adapter.removeLocalMediaStream('screen');
+                    screenEnabled = false;
+                    NAF.connection.broadcastData("otherClientPresenting", {
+                        otherClientPresenting: screenEnabled
+                    });
+                }else {
+                    videoScreenEntity.setAttribute('networked', {template: '#video-template', attachTemplateToLocal: true});
+                    navigator.mediaDevices.getDisplayMedia().then((stream)=>{
+                        NAF.connection.adapter.addLocalMediaStream((stream), 'screen');
+                    });
+                    screenEnabled = true;
+                    NAF.connection.broadcastData("otherClientPresenting", {
+                        otherClientPresenting: screenEnabled
+                    });
+                }
+            }
+        });
+
+        //Camera Share Logic
+        showCameraBtn.addEventListener('click', function () {
+            if(otherClientPresenting){
+                console.log("someone else is presenting");
+            }
+            else{
+                if(cameraEnabled){
+                    cameraScreenEntity.setAttribute('networked', {template: '#camera-template', attachTemplateToLocal: true});
+                }
+                
+                NAF.connection.adapter.enableCamera(cameraEnabled);
+                cameraEnabled = !cameraEnabled;
+
+                if(cameraEnabled){
+                    cameraScreenEntity.removeAttribute('networked');
+                }
+
+                NAF.connection.broadcastData("otherClientPresenting", {
+                    otherClientPresenting: !cameraEnabled,
+                });
+            }
+        });
+
         //Establish Connection
         function onConnect() {
             console.log('onConnect', new Date());
             onlineBtnCounter.innerText = clientsOnline;
+            NAF.connection.adapter.enableCamera(!cameraEnabled);
         }
 
     </script>
