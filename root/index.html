@@ -122,7 +122,7 @@
     </div>
 
     <!-- Embedded 3D Scene -->
-    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; video: true; audio: false;">
+    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; video: true; audio: true;">
 
         <!-- Asset Mangement System -->
         <a-assets>
@@ -214,6 +214,8 @@
                     <a-image id="tvBackgroundImage" src="#tvBackground" position="0 2 -6.46" scale="3.06 1.73 0"></a-image>
                     <a-entity id="camera-screen"></a-entity>
                     <a-entity id="video-screen"></a-entity>
+                    <a-plane class="tv-presenting-plane" position="0 2 -6.45" scale="3.06 1.73 0" material="opacity: 0.0;transparent: true"></a-plane>
+                    <a-entity class="i-am-presenting" position="0 2 -6.445"></a-entity>
                 </a-entity>
 
                 <a-entity id="whiteboardProp" gltf-model="#whiteboard" position="3.96 0.4 0" rotation="0 90 0" scale="0.1 0.1 0.1"></a-entity>
@@ -638,12 +640,17 @@
         });
 
         //Video Share Logic
+        var iAmPresentingTextEntity = document.querySelector('.i-am-presenting');
+        var tvPresentingPlane = document.querySelector('.tv-presenting-plane');
         shareVideoBtn.addEventListener('click', function (){
             if(otherClientPresenting){
                 console.log("someone else is presenting");
             }
             else{
                 if(screenEnabled){
+                    shareVideoBtn.classList.remove('selected');
+                    iAmPresentingTextEntity.removeAttribute('text');
+                    tvPresentingPlane.setAttribute('material', {transparent: true, opacity: 0.0});
                     videoScreenEntity.removeAttribute('networked');
                     NAF.connection.adapter.removeLocalMediaStream('screen');
                     screenEnabled = false;
@@ -651,11 +658,19 @@
                         otherClientPresenting: screenEnabled
                     });
                 }else {
-                    videoScreenEntity.setAttribute('networked', {template: '#video-template', attachTemplateToLocal: true});
+                    shareVideoBtn.classList.add('selected');
                     navigator.mediaDevices.getDisplayMedia().then((stream)=>{
-                        NAF.connection.adapter.addLocalMediaStream((stream), 'screen');
-                    });
-                    screenEnabled = true;
+                        videoScreenEntity.setAttribute('networked', {template: '#video-template', attachTemplateToLocal: true});
+                        NAF.connection.adapter.addLocalMediaStream(stream, 'screen');
+
+                        screenEnabled = true;
+                        iAmPresentingTextEntity.setAttribute('text',{value: "You are presenting!!!", align: 'center', font: 'https://cdn.aframe.io/fonts/Exo2Bold.fnt', width: 5, height: 5, color: 'white'});
+                        tvPresentingPlane.setAttribute('material',{color: '#4A5173', transparent: false, opacity: 100});
+                    }).catch(err => {
+                        console.log("Occured Error: " + err);
+                        shareVideoBtn.classList.remove('selected');
+                    })
+                    
                     NAF.connection.broadcastData("otherClientPresenting", {
                         otherClientPresenting: screenEnabled
                     });
@@ -671,13 +686,18 @@
             else{
                 if(cameraEnabled){
                     cameraScreenEntity.setAttribute('networked', {template: '#camera-template', attachTemplateToLocal: true});
+                    iAmPresentingTextEntity.setAttribute('text',{value: "You are presenting!!!", align: 'center', font: 'https://cdn.aframe.io/fonts/Exo2Bold.fnt', width: 5, height: 5, color: 'white'});
+                    tvPresentingPlane.setAttribute('material',{color: '#4A5173', transparent: false, opacity: 100});
+                    showCameraBtn.classList.add('selected');
                 }
-                
                 NAF.connection.adapter.enableCamera(cameraEnabled);
                 cameraEnabled = !cameraEnabled;
 
                 if(cameraEnabled){
                     cameraScreenEntity.removeAttribute('networked');
+                    iAmPresentingTextEntity.removeAttribute('text');
+                    tvPresentingPlane.setAttribute('material', {transparent: true, opacity: 0.0});
+                    showCameraBtn.classList.remove('selected');
                 }
 
                 NAF.connection.broadcastData("otherClientPresenting", {
@@ -690,7 +710,6 @@
         function onConnect() {
             console.log('onConnect', new Date());
             onlineBtnCounter.innerText = clientsOnline;
-            NAF.connection.adapter.enableCamera(!cameraEnabled);
         }
 
     </script>
