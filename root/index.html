@@ -560,24 +560,6 @@
             }
         });
 
-        //Video Share/ Show Camera
-        var videoBtn = document.querySelector('.video-btn');
-        var shareVideoBtn = document.querySelector('.share-video-btn');
-        var showCameraBtn = document.querySelector('.show-camera-btn');
-        var videoBtnIcon = document.querySelector('.fa-plus');
-        videoBtn.onclick = function(evt) {
-            shareVideoBtn.classList.toggle('hidden');
-            showCameraBtn.classList.toggle('hidden');
-            videoBtn.classList.toggle('hidden');
-            videoBtnIcon.classList.toggle('hidden');
-            if(videoBtn.classList.contains('hidden')) {
-                videoBtnIcon.classList.replace('fa-plus', 'fa-minus');
-            }
-            else {
-                videoBtnIcon.classList.replace('fa-minus', 'fa-plus');
-            }
-        }
-
         //Message Sender
         var chatWindow = document.querySelector('.chat-window');
         sendBtn.onclick = function(evt) {
@@ -622,19 +604,37 @@
             return;
         };
 
+        //Video Share/Show Camera Responsive Styling
+        var videoBtn = document.querySelector('.video-btn');
+        var shareVideoBtn = document.querySelector('.share-video-btn');
+        var showCameraBtn = document.querySelector('.show-camera-btn');
+        var videoBtnIcon = document.querySelector('.fa-plus');
+        videoBtn.onclick = function(evt) {
+            shareVideoBtn.classList.toggle('hidden');
+            showCameraBtn.classList.toggle('hidden');
+            videoBtn.classList.toggle('hidden');
+            videoBtnIcon.classList.toggle('hidden');
+            if(videoBtn.classList.contains('hidden')) {
+                videoBtnIcon.classList.replace('fa-plus', 'fa-minus');
+            }
+            else {
+                videoBtnIcon.classList.replace('fa-minus', 'fa-plus');
+            }
+        }
+
         let cameraEnabled = true;
         var cameraScreenEntity = document.querySelector('#camera-screen');
 
         let screenEnabled = false;
         var videoScreenEntity = document.querySelector('#video-screen');
 
-        //Update 'otherClientPresenting' on change
+        //Update 'otherClientPresenting' globally
         let otherClientPresenting = false;
         NAF.connection.subscribeToDataChannel("otherClientPresenting", function(senderId, dataType, data, targetObj) {
             otherClientPresenting = data.otherClientPresenting;
         });
 
-        //Stream Details (stream_id, stream_name)
+        //End of Stream Details (stream_id, stream_name)
         NAF.connection.subscribeToDataChannel("__closingMediaStream", function(senderId, dataType, data, targetObj) {
             console.log(data);
         });
@@ -647,6 +647,7 @@
                 console.log("someone else is presenting");
             }
             else{
+                //Disable networked video entity
                 if(screenEnabled){
                     shareVideoBtn.classList.remove('selected');
                     iAmPresentingTextEntity.removeAttribute('text');
@@ -654,10 +655,14 @@
                     videoScreenEntity.removeAttribute('networked');
                     NAF.connection.adapter.removeLocalMediaStream('screen');
                     screenEnabled = false;
+
+                    //Update 'otherClientPresenting' to false
                     NAF.connection.broadcastData("otherClientPresenting", {
                         otherClientPresenting: screenEnabled
                     });
-                }else {
+                }
+                //Enable networked video entity
+                else {
                     shareVideoBtn.classList.add('selected');
                     navigator.mediaDevices.getDisplayMedia().then((stream)=>{
                         videoScreenEntity.setAttribute('networked', {template: '#video-template', attachTemplateToLocal: true});
@@ -671,6 +676,7 @@
                         shareVideoBtn.classList.remove('selected');
                     })
                     
+                    //Update 'otherClientPresenting' to true
                     NAF.connection.broadcastData("otherClientPresenting", {
                         otherClientPresenting: screenEnabled
                     });
@@ -684,6 +690,7 @@
                 console.log("someone else is presenting");
             }
             else{
+                //Enable networked camera entity
                 if(cameraEnabled){
                     cameraScreenEntity.setAttribute('networked', {template: '#camera-template', attachTemplateToLocal: true});
                     iAmPresentingTextEntity.setAttribute('text',{value: "You are presenting!!!", align: 'center', font: 'https://cdn.aframe.io/fonts/Exo2Bold.fnt', width: 5, height: 5, color: 'white'});
@@ -693,6 +700,7 @@
                 NAF.connection.adapter.enableCamera(cameraEnabled);
                 cameraEnabled = !cameraEnabled;
 
+                //Disable networked camera entity
                 if(cameraEnabled){
                     cameraScreenEntity.removeAttribute('networked');
                     iAmPresentingTextEntity.removeAttribute('text');
@@ -700,6 +708,7 @@
                     showCameraBtn.classList.remove('selected');
                 }
 
+                //Update 'otherClientPresenting' to true or false (depending on 'cameraEnabled' status)
                 NAF.connection.broadcastData("otherClientPresenting", {
                     otherClientPresenting: !cameraEnabled,
                 });
