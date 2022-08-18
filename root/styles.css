@@ -82,9 +82,9 @@ a-scene {
 
 .chat-box{
     z-index: 110;
-    display: inline-block;
+    display: flex;
     position: relative;
-    width: 20rem;
+    width: 20.7rem;
     height: 25rem;
     background-color: black;
     border-radius: 5px;
@@ -92,12 +92,30 @@ a-scene {
     opacity: 90%;
     transform: translateX(-110%);
     transition-duration: 500ms;
+    
 }
 
 .chat-box.hidden{
     transition-duration: 500ms;
     transform: translateX(0);
 }
+
+.chat-box.hidden.show{
+    transition-duration: 0ms;
+    transform: translateX(0);
+}
+
+.chat-box.file-upload.hidden.show{
+    height: 27.35rem;
+    transition-duration: 0ms;
+    transform: translateX(0);
+}
+
+.chat-box.file-upload.show{
+    height: 27.35rem;
+    transform: translateX(-110%);
+}
+
 
 .chat-window{
     overflow: scroll;
@@ -109,6 +127,7 @@ a-scene {
   display: none;
 }
 
+/* Client's Message Template */
 .client-message{
     padding: 5px 0;
     display: inline-block;
@@ -148,9 +167,11 @@ a-scene {
     color: deepskyblue;
 }
 
+/* My Message Template */
 .my-message{
     padding: 5px 0;
     color: white;
+    outline: 1px solid red;
 }
 
 .my-info{
@@ -192,15 +213,20 @@ a-scene {
 .chat-input{
     display: flex;
     justify-content: center;
+    align-items: center;
     width: 100%;
     position: absolute;
     bottom: 0;
     padding: 10px 0;
 }
 
+.chat-input.file-upload{
+    bottom: 2.35rem;
+}
+
 input{
     width: 16rem;
-    margin-left: -1rem;
+    margin-left: -1.3rem;
     font-size: 1rem;
     height: 2rem;
     background-color: transparent;
@@ -216,13 +242,79 @@ input{
     color: white;
     display: flex;
     align-items: center;
-    margin-left: 10px;
-    width: 1.8rem;
-    padding-left: 10px
+    margin-left: 15px;
 }
 
 .fa-paper-plane:hover{
     color: lightblue;
+    cursor: pointer;
+}
+
+.file-upload__input{
+    display: none;
+}
+
+.fa-paperclip{
+    background-color: transparent;
+    color: white;
+    margin-left: 15px;
+}
+
+.fa-paperclip:hover{
+    color: orange;
+    cursor: pointer;
+}
+
+.uploaded-files{
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    position: absolute;
+    bottom: 0.25rem;
+    max-width: 20.7rem;
+    overflow-x: scroll;
+}
+
+.uploaded-files::-webkit-scrollbar {
+    background: transparent;
+    height: 5px;
+}
+  
+.uploaded-files::-webkit-scrollbar-thumb {
+    background-color: grey;
+    border-radius: 20px;
+}
+
+.uploaded-file{
+    display: flex;
+    align-items: center;
+    max-width: 7rem;
+    background-color: orange;
+    border-radius: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-right: 5px;
+    overflow: ellipsis;
+    padding: 6px;
+}
+
+.file-name{
+    color: white;
+    font-size: 1rem;
+    max-width: 5.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fa-xmark{
+    color: white;
+    margin-left: 7px;
+    font-size: 1rem;
+}
+
+.fa-xmark:hover{
+    color: red;
     cursor: pointer;
 }
 

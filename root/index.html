@@ -85,12 +85,17 @@
 
         <div class="top-pop-ups">
             <!-- Chat Box -->
-            <div class="chat-box">
+            <div id="chat-box-id" class="chat-box">
                 <div class="chat-window"></div>
+
                 <div class="chat-input">
                     <input id="text-input" type="text" placeholder="Enter Message" />
                     <i class="fa-solid fa-paper-plane"></i>
+                    <input class="file-upload__input" type="file" name="myFile[]" multiple>
+                    <i class="fa-solid fa-paperclip"></i>
                 </div>
+
+                <div class="uploaded-files"></div>
             </div>
 
             <!-- Online Box -->
@@ -122,7 +127,7 @@
     </div>
 
     <!-- Embedded 3D Scene -->
-    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; video: true; audio: true;">
+    <a-scene background="color: lightblue" networked-scene="app: myApp; room: room1; debug: true; adapter: easyrtc; video: true; audio: false;">
 
         <!-- Asset Mangement System -->
         <a-assets>
@@ -320,15 +325,81 @@
 
     <!-- JS -->
     <script>
-
+        //Deactivate Default Camera
         document.querySelector('a-scene').addEventListener('loaded', function () {
                 this.camera.el.setAttribute('camera', 'active: false')
+        });
+
+        //File Upload
+        var chatInput = document.querySelector('.chat-input');
+        var uploadedFilesDiv = document.querySelector('.uploaded-files');
+        var updatedFileList = new DataTransfer();
+        Array.prototype.forEach.call(document.querySelectorAll('.fa-paperclip'), function (button){
+            var hiddenFileInput = document.querySelector('.file-upload__input');
+            
+            button.addEventListener('click', function (){
+                hiddenFileInput.click();
+            });
+
+            hiddenFileInput.addEventListener('change', function(){
+                chatBox.classList.add('file-upload');
+                chatInput.classList.add('file-upload');
+                chatBox.classList.add('show');
+                
+                //Display chosen files
+                Array.prototype.map.call(hiddenFileInput.files, function (file){
+                    updatedFileList.items.add(file);
+
+                    var uploadedFileDiv = document.createElement('div');
+                    var fileNameTag = document.createElement('p');
+                    var crossIcon = document.createElement('i');
+                    uploadedFileDiv.classList.add('uploaded-file');
+                    fileNameTag.classList.add('file-name');
+                    crossIcon.classList.add('fa-solid');
+                    crossIcon.classList.add('fa-xmark');
+                    uploadedFileDiv.appendChild(fileNameTag);
+                    uploadedFileDiv.appendChild(crossIcon);
+                    uploadedFilesDiv.appendChild(uploadedFileDiv);
+                    fileNameTag.textContent = file.name;
+
+                    //Logic for removing chosen file(s)
+                    crossIcon.addEventListener('click', function (){
+                        let parent = crossIcon.parentElement;
+                        let filename = parent.firstChild.textContent;
+                        
+                        //Remove unselected file
+                        while(parent.hasChildNodes()){
+                            parent.removeChild(parent.lastElementChild);
+                        }
+                        parent.remove();
+
+                        //Updating the FileList (remove unselected files)
+                        let updateFileList = new DataTransfer();
+                        Array.prototype.forEach.call(updatedFileList.files, function (file){
+                            if(file.name !== filename){
+                                updateFileList.items.add(file);
+                            }
+                        });
+                        updatedFileList = updateFileList;
+                        hiddenFileInput.files = updatedFileList.files;
+
+                        //Adjust styling if all files were unselected
+                        if(!uploadedFilesDiv.hasChildNodes()){
+                            chatBox.classList.remove('file-upload');
+                            chatInput.classList.remove('file-upload');
+                            setTimeout(function(){
+                                chatBox.classList.remove('show');
+                            },10)
+                        }
+                    });
+                });
+            })
         });
 
         //Chat Box Toggle
         var vrChatBtn = document.querySelector('.chat-btn');
         var vrChatBtnText = document.querySelector('.btn-text');
-        var chatBox = document.querySelector('.chat-box');
+        var chatBox = document.getElementById('chat-box-id');
         var chatBtnArrow = document.querySelector('.chat.fa-angle-down');
         vrChatBtn.onclick = function(evt) {
 
@@ -533,7 +604,9 @@
             clientMessage.appendChild(clientMessageText);
             clientTime.innerText = data.time;
             clientName.innerText = senderId;
+            if(data.fileList){
 
+            }
             //Check if mesasge is a Website
             if (text.substring(0, 4) == "www." || text.substring(0, 8) == "https://" || text.substring(0, 7) == "http://") {
                 clientMessageText.setAttribute('href', text);
@@ -568,10 +641,19 @@
                 minute: '2-digit'
             });
             let textInput = document.getElementById('text-input').value;
-            NAF.connection.broadcastData("text", {
-                text: textInput,
-                time: timeNow
-            });
+            if(hiddenFileInput.files.length==0){
+                NAF.connection.broadcastData("text", {
+                    text: textInput,
+                    time: timeNow,
+                });
+            }else{
+                NAF.connection.broadcastData("text", {
+                    text: textInput,
+                    time: timeNow,
+                    fileList: hiddenFileInput.files
+                });
+                //document.querySelector('.file-upload__input').value="";
+            }
 
             //Appending New Message to Chat Box //Sender Side//
             var myMessage = document.createElement("div");
@@ -723,7 +805,7 @@
 
     </script>
     
-    <!-- 
+    <!--
         Known issues with screen sharing:  
             - If participant A starts screen share, stops, and restarts the screen share, 
               other participants won't see it (just a white screen).
