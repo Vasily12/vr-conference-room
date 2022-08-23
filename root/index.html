@@ -148,6 +148,7 @@
             <img id="ceilingTexture" src="assets/ceilingTexture.png" />
             <img id="ceilingTexture-NRM" src="assets/NormalMap-ceilingTexture.png" />
             <img id="laptopBackground" src="assets/laptopBackground.jpg" />
+          <!--  <video id="webcam" playsinline crossorigin="anonymous" src="#" sandbox="allow-same-origin"></video> -->
 
             <!-- Avatar Template -->
             <template id="avatar-template">
@@ -219,8 +220,6 @@
                     <a-image id="tvBackgroundImage" src="#tvBackground" position="0 2 -6.46" scale="3.06 1.73 0"></a-image>
                     <a-entity id="camera-screen"></a-entity>
                     <a-entity id="video-screen"></a-entity>
-                    <a-plane class="tv-presenting-plane" position="0 2 -6.45" scale="3.06 1.73 0" material="opacity: 0.0;transparent: true"></a-plane>
-                    <a-entity class="i-am-presenting" position="0 2 -6.445"></a-entity>
                 </a-entity>
 
                 <a-entity id="whiteboardProp" gltf-model="#whiteboard" position="3.96 0.4 0" rotation="0 90 0" scale="0.1 0.1 0.1"></a-entity>
@@ -604,9 +603,48 @@
             clientMessage.appendChild(clientMessageText);
             clientTime.innerText = data.time;
             clientName.innerText = senderId;
-            if(data.fileList){
+            
+            //NAF.connection.subscribeToDataChannel("files", function(senderId, dataType, data, targetObj) {
+            //    var formData = new FormData();
+            //    formData = data.files;
+            //    console.log(data.files);
+            //});
+            //console.log(Object.keys(data.files).length);
+            if(data.files !=undefined || data.files != null){
+                var files = data.files;
+                console.log(files);
+                var downloadFilesDiv = document.createElement('div');
+                downloadFilesDiv.classList.add('download-files__client');
+                for(var i in files){
+                    var filename = i;
+                    var downloadURL = files[i];
+                    console.log(filename + " : " + downloadURL);
 
+                    var downloadFileDiv = document.createElement('div');
+                    var downloadFileName = document.createElement('p');
+                    var downloadIcon = document.createElement('i');
+                    var downloadLink = document.createElement('a'); //not visible
+                    downloadFileDiv.classList.add('download-file__client');
+                    downloadFileName.classList.add('download-file-name__client');
+                    downloadIcon.classList.add('fa-solid');
+                    downloadIcon.classList.add('fa-download');
+                    downloadLink.classList.add('download-link__client');
+                    downloadLink.setAttribute('download', filename);
+                    downloadFileDiv.appendChild(downloadFileName);
+                    downloadFileDiv.appendChild(downloadIcon);
+                    downloadFileDiv.appendChild(downloadLink);
+                    downloadFilesDiv.appendChild(downloadFileDiv);
+                    clientMessage.appendChild(downloadFilesDiv);
+
+                    downloadFileName.textContent = filename;
+                    downloadLink.href = downloadURL;
+
+                    downloadIcon.addEventListener('click', function (){
+                        downloadLink.click();
+                    });
+                }
             }
+
             //Check if mesasge is a Website
             if (text.substring(0, 4) == "www." || text.substring(0, 8) == "https://" || text.substring(0, 7) == "http://") {
                 clientMessageText.setAttribute('href', text);
@@ -641,49 +679,100 @@
                 minute: '2-digit'
             });
             let textInput = document.getElementById('text-input').value;
-            if(hiddenFileInput.files.length==0){
-                NAF.connection.broadcastData("text", {
-                    text: textInput,
-                    time: timeNow,
-                });
+
+            if(textInput == ""){
+                return;
             }else{
-                NAF.connection.broadcastData("text", {
-                    text: textInput,
-                    time: timeNow,
-                    fileList: hiddenFileInput.files
-                });
-                //document.querySelector('.file-upload__input').value="";
+                //Check if any files selected for upload
+                if(updatedFileList.files.length==0){
+                    NAF.connection.broadcastData("text", {
+                        text: textInput,
+                        time: timeNow,
+                    });
+                }else{
+                    var downloadURLs = {};
+                    for(let i=0;i<updatedFileList.files.length;i++){
+                        downloadURLs[updatedFileList.files[i].name] = URL.createObjectURL(updatedFileList.files[i]);
+                    }
+                    NAF.connection.broadcastData("text", {
+                        text: textInput,
+                        time: timeNow,
+                        files: downloadURLs
+                    });
+                }
+
+                //Append New Message to Chat Box //Sender Side//
+                var myMessage = document.createElement("div");
+                var myInfo = document.createElement("div");
+                var myTime = document.createElement("p");
+                var myName = document.createElement("h4");
+                var myMessageText = document.createElement("a");
+                myMessage.classList.add("my-message");
+                myInfo.classList.add("my-info");
+                myTime.classList.add("my-time");
+                myName.classList.add("my-name");
+                myMessageText.classList.add("my-message-text");
+                myMessage.appendChild(myInfo);
+                myInfo.appendChild(myTime);
+                myInfo.appendChild(myName);
+                myMessage.appendChild(myMessageText);
+                myTime.innerText = timeNow;
+                myName.innerText = clientId;
+
+                //Check if message is a Website
+                if (textInput.substring(0, 4) == "www." || textInput.substring(0, 8) == "https://" || textInput.substring(0, 7) == "http://") {
+                    myMessageText.setAttribute('href', textInput);
+                    myMessageText.classList.add('website');
+                }
+                myMessageText.innerText = textInput;
+
+                //Append uploaded files to message
+                if(updatedFileList.files.length>0){
+                    var downloadFilesDiv = document.createElement('div');
+                    downloadFilesDiv.classList.add('download-files__mine');
+                    Array.prototype.forEach.call(updatedFileList.files, function(file){
+                        var downloadFileDiv = document.createElement('div');
+                        var downloadFileName = document.createElement('p');
+                        var downloadIcon = document.createElement('i');
+                        var downloadLink = document.createElement('a'); //not visible
+                        downloadFileDiv.classList.add('download-file__mine');
+                        downloadFileName.classList.add('download-file-name__mine');
+                        downloadIcon.classList.add('fa-solid');
+                        downloadIcon.classList.add('fa-download');
+                        downloadLink.classList.add('download-link__mine');
+                        downloadLink.setAttribute('download', file.name);
+                        downloadFileDiv.appendChild(downloadFileName);
+                        downloadFileDiv.appendChild(downloadIcon);
+                        downloadFileDiv.appendChild(downloadLink);
+                        downloadFilesDiv.appendChild(downloadFileDiv);
+                        myMessage.appendChild(downloadFilesDiv);
+
+                        downloadFileName.textContent = file.name;
+                        downloadLink.href = URL.createObjectURL(file);
+
+                        downloadIcon.addEventListener('click', function (){
+                            downloadLink.click();
+                        });
+                    });
+                }
+
+                chatWindow.appendChild(myMessage);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+                document.getElementById('text-input').value = "";
+
+                //Clear FileList + Remove Selected Files Styling
+                document.querySelector('.file-upload__input').value="";
+                updatedFileList.clearData();
+                while(uploadedFilesDiv.hasChildNodes()){
+                    uploadedFilesDiv.removeChild(uploadedFilesDiv.lastElementChild);
+                }
+                chatBox.classList.remove('file-upload');
+                chatInput.classList.remove('file-upload');
+                setTimeout(function(){
+                    chatBox.classList.remove('show');
+                },10)
+                return;
             }
-
-            //Appending New Message to Chat Box //Sender Side//
-            var myMessage = document.createElement("div");
-            var myInfo = document.createElement("div");
-            var myTime = document.createElement("p");
-            var myName = document.createElement("h4");
-            var myMessageText = document.createElement("a");
-            myMessage.classList.add("my-message");
-            myInfo.classList.add("my-info");
-            myTime.classList.add("my-time");
-            myName.classList.add("my-name");
-            myMessageText.classList.add("my-message-text");
-            myMessage.appendChild(myInfo);
-            myInfo.appendChild(myTime);
-            myInfo.appendChild(myName);
-            myMessage.appendChild(myMessageText);
-            myTime.innerText = timeNow;
-            myName.innerText = clientId;
-
-            //Check if mesasge is a Website
-            if (textInput.substring(0, 4) == "www." || textInput.substring(0, 8) == "https://" || textInput.substring(0, 7) == "http://") {
-                myMessageText.setAttribute('href', textInput);
-                myMessageText.classList.add('website');
-            }
-
-            myMessageText.innerText = textInput;
-            chatWindow.appendChild(myMessage);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-            document.getElementById('text-input').value = "";
-            return;
         };
 
         //Video Share/Show Camera Responsive Styling
@@ -705,7 +794,7 @@
         }
 
         let cameraEnabled = true;
-        var cameraScreenEntity = document.querySelector('#camera-screen');
+        var cameraScreenEntity = document.getElementById('camera-screen');
 
         let screenEnabled = false;
         var videoScreenEntity = document.querySelector('#video-screen');
@@ -722,20 +811,26 @@
         });
 
         //Video Share Logic
-        var iAmPresentingTextEntity = document.querySelector('.i-am-presenting');
-        var tvPresentingPlane = document.querySelector('.tv-presenting-plane');
+        var tvProp = document.getElementById('tvProp');
+        var assets = document.querySelector('a-assets');
+        var video = document.createElement('video');
+
+        video.setAttribute('id', 'videoAsset');
+        video.setAttribute('playsinline','');
+        video.setAttribute('autoplay','');
+        video.setAttribute('muted','');
+        assets.appendChild(video);
         shareVideoBtn.addEventListener('click', function (){
             if(otherClientPresenting){
                 console.log("someone else is presenting");
             }
             else{
-                //Disable networked video entity
+                //Disable networked video entity & Hosts video entity
                 if(screenEnabled){
                     shareVideoBtn.classList.remove('selected');
-                    iAmPresentingTextEntity.removeAttribute('text');
-                    tvPresentingPlane.setAttribute('material', {transparent: true, opacity: 0.0});
+                    video.removeAttribute('srcObject');
+                    tvProp.removeChild(tvProp.lastElementChild);
                     videoScreenEntity.removeAttribute('networked');
-                    NAF.connection.adapter.removeLocalMediaStream('screen');
                     screenEnabled = false;
 
                     //Update 'otherClientPresenting' to false
@@ -743,16 +838,20 @@
                         otherClientPresenting: screenEnabled
                     });
                 }
-                //Enable networked video entity
+                //Enable networked video entity & Hosts video entity
                 else {
                     shareVideoBtn.classList.add('selected');
-                    navigator.mediaDevices.getDisplayMedia().then((stream)=>{
+                    navigator.mediaDevices.getDisplayMedia().then(stream=>{
                         videoScreenEntity.setAttribute('networked', {template: '#video-template', attachTemplateToLocal: true});
                         NAF.connection.adapter.addLocalMediaStream(stream, 'screen');
 
+                        let plane = document.createElement('a-plane');
+                        video.srcObject = stream;
+                        plane.setAttribute('src', '#videoAsset');
+                        plane.setAttribute('position', '0 2 -6.45');
+                        plane.setAttribute('scale', '3.06 1.73 0');
+                        tvProp.appendChild(plane);
                         screenEnabled = true;
-                        iAmPresentingTextEntity.setAttribute('text',{value: "You are presenting!!!", align: 'center', font: 'https://cdn.aframe.io/fonts/Exo2Bold.fnt', width: 5, height: 5, color: 'white'});
-                        tvPresentingPlane.setAttribute('material',{color: '#4A5173', transparent: false, opacity: 100});
                     }).catch(err => {
                         console.log("Occured Error: " + err);
                         shareVideoBtn.classList.remove('selected');
@@ -766,27 +865,36 @@
             }
         });
 
+
         //Camera Share Logic
         showCameraBtn.addEventListener('click', function () {
             if(otherClientPresenting){
                 console.log("someone else is presenting");
             }
             else{
-                //Enable networked camera entity
+                //Enable networked camera entity & Hosts camera entity
                 if(cameraEnabled){
                     cameraScreenEntity.setAttribute('networked', {template: '#camera-template', attachTemplateToLocal: true});
-                    iAmPresentingTextEntity.setAttribute('text',{value: "You are presenting!!!", align: 'center', font: 'https://cdn.aframe.io/fonts/Exo2Bold.fnt', width: 5, height: 5, color: 'white'});
-                    tvPresentingPlane.setAttribute('material',{color: '#4A5173', transparent: false, opacity: 100});
                     showCameraBtn.classList.add('selected');
+                    
+                    navigator.mediaDevices.getUserMedia({video: true, audio: false}).then( stream => {
+                        let plane = document.createElement('a-plane');
+                        video.srcObject = stream;
+                        plane.setAttribute('src', '#videoAsset');
+                        plane.setAttribute('position', '0 2 -6.45');
+                        plane.setAttribute('scale', '3.06 1.73 0');
+                        tvProp.appendChild(plane);
+                    });
                 }
+
                 NAF.connection.adapter.enableCamera(cameraEnabled);
                 cameraEnabled = !cameraEnabled;
 
-                //Disable networked camera entity
+                //Disable networked camera entity & Hosts camera entity
                 if(cameraEnabled){
+                    video.removeAttribute('srcObject');
+                    tvProp.removeChild(tvProp.lastElementChild);
                     cameraScreenEntity.removeAttribute('networked');
-                    iAmPresentingTextEntity.removeAttribute('text');
-                    tvPresentingPlane.setAttribute('material', {transparent: true, opacity: 0.0});
                     showCameraBtn.classList.remove('selected');
                 }
 

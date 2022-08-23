@@ -116,10 +116,10 @@ a-scene {
     transform: translateX(-110%);
 }
 
-
 .chat-window{
     overflow: scroll;
     height: 21rem;
+    width: 20rem;
     padding: 7px;
 }
 
@@ -167,11 +167,52 @@ a-scene {
     color: deepskyblue;
 }
 
+.download-files__client{
+    display: flex;
+    width: 17rem;
+    flex-wrap: wrap;
+}
+
+.download-file__client{
+    display: flex;
+    align-items: center;
+    max-width: 12rem;
+    background-color: orange;
+    border-radius: 5px;
+    margin-top: 5px;
+    margin-right: 5px;
+    padding: 6px;
+}
+
+.download-file-name__client{
+    white-space: nowrap;
+    color: white;
+    font-size: 1rem;
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fa-download{
+    color: white;
+    margin-left: 7px;
+    font-size: 1rem;
+}
+
+.fa-download:hover{
+    cursor: pointer;
+    color: black;
+}
+
+.download-link__client{
+    display: none;
+}
+
 /* My Message Template */
 .my-message{
     padding: 5px 0;
     color: white;
-    outline: 1px solid red;
 }
 
 .my-info{
@@ -197,8 +238,7 @@ a-scene {
     display: flex;
     justify-content: right;
     width: 16rem;
-    margin-left: 3rem;
-    margin-right: 5px;
+    margin-left: 3.5rem;
     font-size: 18px;
     color: white;
     overflow-wrap: break-word;
@@ -210,6 +250,40 @@ a-scene {
     color: deepskyblue;
 }
 
+.download-files__mine{
+    display: flex;
+    width: 17rem;
+    flex-wrap: wrap;
+    margin-left: 3.2rem;
+    justify-content: right;
+}
+
+.download-file__mine{
+    display: flex;
+    align-items: center;
+    max-width: 12rem;
+    background-color: orange;
+    border-radius: 5px;
+    margin-top: 5px;
+    margin-right: 5px;
+    padding: 6px;
+}
+
+.download-file-name__mine{
+    white-space: nowrap;
+    color: white;
+    font-size: 1rem;
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.download-link__mine{
+    display: none;
+}
+
+/* Chat Input Field */
 .chat-input{
     display: flex;
     justify-content: center;
