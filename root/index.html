@@ -10,7 +10,9 @@
     <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/diarmidmackenzie/instanced-mesh@v0.5.0/src/instanced-mesh.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.misc.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Hypnos-phi/aframe-extras@d08cf88/dist/aframe-extras.controls.min.js"></script>
     <script src="https://unpkg.com/aframe-physics-extras@0.1.2/dist/aframe-physics-extras.min.js"></script>
+    <script src="https://recast-api.donmccurdy.com/aframe-inspector-plugin-recast.js"></script>
 
     <!-- Networked Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.5.0/socket.io.slim.js"></script>
@@ -21,39 +23,45 @@
     <script src="https://kit.fontawesome.com/33a204ba2e.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="./styles.css">
 
-    <!-- Spawn-In-Circle -->
-    <script>
-        AFRAME.registerComponent('spawn-in-circle', {
-            schema: {
-                radius: {type: 'number', default: 1}
-            },
+    <!-- Navigation Mesh Movement Sync (Script) -->
+    <script src="./simple-navmesh-constraint.js"></script>
 
+    <!-- Positional & Rotational Sync (between components) -->
+    <script>
+        NAF.schemas.getComponentsOriginal = NAF.schemas.getComponents;
+        NAF.schemas.getComponents = (template) => {
+        if (!NAF.schemas.hasTemplate('#avatar-template')) {
+            NAF.schemas.add({
+            template: '#avatar-template',
+            components: ['position', 'rotation']
+            });
+        }
+        const components = NAF.schemas.getComponentsOriginal(template);
+        return components;
+        };
+    </script>
+
+    <!-- Spawn Positioning -->
+    <script>
+        AFRAME.registerComponent('spawn-positioning', {
             init: function() {
                 var el = this.el;
                 var center = el.getAttribute('position');
+                var _CLIENT_BOUNDS = [[-3.0,6.0], [3.0, 4.5]];
+                var _CLIENT_XZ_POSITION = [this.rand_range(_CLIENT_BOUNDS[0][0], _CLIENT_BOUNDS[1][0]), 
+                                           this.rand_range(_CLIENT_BOUNDS[0][1], _CLIENT_BOUNDS[1][1])];
 
-                var angleRad = this.getRandomAngleInRadians();
-                var circlePoint = this.randomPointOnCircle(this.data.radius, angleRad);
-                var worldPoint = {x: circlePoint.x + center.x, y: center.y, z: circlePoint.y + center.z};
+                var worldPoint = {x: _CLIENT_XZ_POSITION[0], y: center.y, z: _CLIENT_XZ_POSITION[1]};
                 el.setAttribute('position', worldPoint);
-
-                var angleDeg = angleRad * 180 / Math.PI;
-                var angleToCenter = -1 * angleDeg + 90;
-                angleRad = THREE.Math.degToRad(angleToCenter);
-                el.object3D.rotation.set(0, angleRad, 0);
+                el.object3D.rotation.set(0, 0, 0);
             },
-
-            getRandomAngleInRadians: function() {
-                return Math.random()*Math.PI*2;
-            },
-
-            randomPointOnCircle: function (radius, angleRad) {
-                var x = Math.cos(angleRad)*radius;
-                var y = Math.sin(angleRad)*radius;
-                return {x: x, y: y};
+            //Compute random number within the range
+            rand_range: function(a, b) {
+                return Math.random() * (b - a) + a;
             }
         });
     </script>
+    
 </head>
 
 <body>
@@ -138,6 +146,7 @@
             <a-asset-item id="whiteboard" src="assets/whiteboard.glb" response-type="arraybuffer"></a-asset-item>
             <a-asset-item id="ceilingLight" src="/assets/lamp.glb" response-type="arraybuffer"></a-asset-item>
             <a-asset-item id="avatarRobot" src="assets/robot2.glb" response-type="arraybuffer"></a-asset-item>
+            <a-asset-item id="navMesh" src="./assets/navmesh.gltf"></a-asset-item>
             <img id="carpet" src="./assets/BlueCarpet.jpg" />
             <img id="carpet-NRM" src="./assets/NormalMap-BlueCarpet.png" />
             <img id="concreteWall" src="./assets/ConreteWall.jpg" />
@@ -148,7 +157,6 @@
             <img id="ceilingTexture" src="assets/ceilingTexture.png" />
             <img id="ceilingTexture-NRM" src="assets/NormalMap-ceilingTexture.png" />
             <img id="laptopBackground" src="assets/laptopBackground.jpg" />
-          <!--  <video id="webcam" playsinline crossorigin="anonymous" src="#" sandbox="allow-same-origin"></video> -->
 
             <!-- Avatar Template -->
             <template id="avatar-template">
@@ -180,14 +188,20 @@
         <!-- Wrapping Entity -->
         <a-entity id="conferenceRoom"> 
 
+            <!-- Navigation Mesh (GLTF) -->
+            <a-entity>
+                <a-gltf-model class="navmesh" src="#navMesh" visible="false"></a-gltf-model>
+            </a-entity>
+
             <!-- Avatar Entity -->
             <a-entity id="player"
-                      networked="template:#avatar-template;attachTemplateToLocal:false;" 
-                      camera
-                      position="0 1.6 0"
-                      look-controls
-                      spawn-in-circle="radius:3"
-                      wasd-controls>
+                    networked="template:#avatar-template;attachTemplateToLocal:false;" 
+                    camera
+                    wasd-controls="acceleration: 35"
+                    simple-navmesh-constraint="navmesh:.navmesh;fall:0.5;"
+                    position="0 1.6 0"
+                    spawn-positioning
+                    look-controls>
             </a-entity>
 
             <a-entity id="props">
